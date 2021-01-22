@@ -49,4 +49,8 @@ router.beforeEach((to,from,next)=>{
   next()
 })
 
+<<<<<<< HEAD
 export default router
+=======
+export default router
+>>>>>>> user
