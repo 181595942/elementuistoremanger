@@ -72,8 +72,8 @@
         <template slot-scope="scope">            
             <el-button type="primary" icon="el-icon-edit" size="mini" @click="iseditDialogVisible(scope.row.id )"></el-button>
             <el-button type="primary" icon="el-icon-delete" size="mini" @click="deleteUserByid(scope.row.id )"></el-button>
-          <el-tooltip  effect="dark" content="Top Center 提示文字" placement="top" :enterable="false">  
-            <el-button type="primary" icon="el-icon-share" size="mini"> </el-button>
+          <el-tooltip  effect="dark" content="分配角色" placement="top" :enterable="false">  
+            <el-button type="primary" icon="el-icon-share" size="mini" @click="editRoles(scope.row)"> </el-button>
           </el-tooltip>
         </template>       
       </el-table-column>
@@ -142,6 +142,32 @@
        <el-button type="primary" @click="editUserInfo">确 定</el-button>
     </span>
     </el-dialog>
+    <!-- 分配角色对话框 -->
+    <el-dialog
+  title="分配角色"
+  :visible.sync="rolesDialogVisible"
+  width="50%"
+  @close="setRoleDalogClose"
+  >
+  <div>
+    <p> 当前的用户：  {{roles.username}}</p>
+    <p> 当前的角色：  {{roles.role_name}}</p>
+    <p> 分配新角色：  
+      <el-select v-model="selectRoleID" placeholder="请选择">
+       <el-option
+        v-for="item in roleslistinfo"
+        :key="item.id"
+        :label="item.roleName"
+        :value="item.id">
+       </el-option>
+    </el-select>
+   </p>
+  </div>
+  <span slot="footer" class="dialog-footer">
+    <el-button @click="rolesDialogVisible = false">取 消</el-button>
+    <el-button type="primary" @click="saveUsersRoles"  >确 定</el-button>
+  </span>
+</el-dialog>
 </el-card>
 </div>
 </template>
@@ -180,6 +206,10 @@ export default {
       dialogVisible: false,
       editDialogVisible : false,
       EditusersDataFrom : '',
+      rolesDialogVisible:false,
+      roles:{},
+      selectRoleID:'',
+      roleslistinfo:[],
 
       addFrom:{
         username:'',
@@ -273,8 +303,10 @@ export default {
            this.$message.success('添加用户成功')
            this.dialogVisible = false 
            this.getUsersData()           
+         }else{
+           return this.$message.error('添加用户失败')
          }
-         return this.$message.error('添加用户失败')
+         
          }
       }    
       )
@@ -329,7 +361,43 @@ export default {
             message: '已取消删除'
           });          
         });
-      }  
+      },
+   async  editRoles(roles){
+      
+      this.roles = roles 
+      const {data : res } = await this.$http.get('roles')
+      if(res.meta.status !== 200 ){
+        return this.$message.error('请求角色列表失败')
+      } else {
+         this.roleslistinfo = res.data
+      }
+      this.rolesDialogVisible = true
+    },
+
+   async  saveUsersRoles(){
+      if(!this.selectRoleID){
+        this.$message.error('请选择要分配的角色')
+      }
+
+      // console.log(this.roles);
+      // console.log(this.roleslistinfo);
+      console.log(this.selectRoleID);
+     const {data:res } =  await this.$http.put(`users/${this.roles.id}/role`,{rid:this.selectRoleID})
+       if(res.meta.status !== 200){
+         return this.$message.error('分配角色失败')
+       }
+         this.$message.success('更新成功')
+         this.getUsersData()
+         this.rolesDialogVisible = false
+       
+       
+       
+    },
+    //重置角色分配对话框
+    setRoleDalogClose(){
+        this.selectRoleID = '',
+        this.roles = {}
+    }
   },
 };
 </script>

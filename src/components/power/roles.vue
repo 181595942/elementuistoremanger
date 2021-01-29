@@ -62,13 +62,15 @@
   title="权限"
   :visible.sync="dialogVisible"
   width="50%"
+  @close="closeRightDialog"
   >
   <el-tree :data="rightlist" :props="defaultProps" show-checkbox node-key="id" default-expand-all 
    :default-checked-keys="defaultCheck"
+   ref="treeRef"
    ></el-tree>
   <span slot="footer" class="dialog-footer">
     <el-button @click="dialogVisible = false">取 消</el-button>
-    <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
+    <el-button type="primary" @click="allotRoles">确 定</el-button>
   </span>
 </el-dialog>
   </div>
@@ -86,7 +88,8 @@ export default {
                  children: 'children',
                  label: 'authName'
             },
-            defaultCheck:[]
+            defaultCheck:[],
+            roleId:''
         }
     },
     created() {
@@ -143,7 +146,8 @@ export default {
         //   });          
         // });   
         },
-      async openRightDislog(role){       
+      async openRightDislog(role){     
+          this.roleId = role.id  
             const {data : res } =  await this.$http.get('rights/tree')
          
             if(res.meta.status !==200 ){
@@ -161,6 +165,22 @@ export default {
         },
         closeRightDialog(){
             this.defaultCheck = []
+        },
+      async  allotRoles(){
+        //   this.dialogVisible  = false 
+          const treearr = [
+              ...this.$refs.treeRef.getCheckedKeys(),
+              ...this.$refs.treeRef.getHalfCheckedKeys()
+          ]
+          const idstr = treearr.join(',')
+          const {data:res } =   await this.$http.post(`roles/${this.roleId}/rights`,{rids: idstr})
+          console.log( res );
+          if (res.meta.status!==200){
+                return this.$message.error('更新权限失败')
+          }
+          this.$message.success('更新权限成功')
+          this.getRulesListData()
+          this.dialogVisible  = false 
         }
     },
 //  
